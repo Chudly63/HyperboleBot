@@ -27,25 +27,34 @@ else:
 		hitlerIDs = hitlerIDs.split("\n")
 		hitlerIDs = list(filter(None, hitlerIDs))
 
+
 if not os.path.isfile("numHitler.txt"):
 	hitlerCount = 0
 else:
 	with open("numHitler.txt","r") as f:
 		hitlerCount = int(f.read())
 
-links = []
+
+if not os.path.isfile("linksToHitler.txt"):
+	links = []
+else:
+	with open("linksToHitler.txt","r") as f:
+		links = f.read()
+		links = links.split("\n")
+		links = list(filter(None, links))
+
 
 subreddit = reddit.subreddit('politics') #Selecting our subreddit
+postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
 print("READY FOR HITLERS")
-for submission in subreddit.hot(limit=1): 			#Get the posts from that subreddit
-	print submission.title + "\n\n"
+for submission in subreddit.top('day',limit=1): 			#Get the posts from that subreddit
+	print submission.title 
 	#The comment section on a Reddit post only shows the first few comments
 	#The rest are not loaded until the user clicks the 'load more comments' link
 	#The replace_more() function loads the comments hidden behind this link
 	submission.comments.replace_more(limit=None)		
-	
-	print(str(len(submission.comments.list())))
+
 	for comment in submission.comments.list():
 		if re.search("hitler", comment.body, re.IGNORECASE):
 			if comment.id not in hitlerIDs:
@@ -62,6 +71,12 @@ with open("commentsWithHitler.txt","w") as f:
 with open("numHitler.txt","w") as f:
 	f.write(str(hitlerCount)+"\n")
 
+
+postText = "I found " + str(hitlerCount) + " Hitlers in r/Politics today.\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+
+
 with open("linksToHitler.txt","w") as f:
 	for link in links:
 		f.write(link + "\n")
+		postText = postText + "\n" + link
+postSubreddit.submit('Today', selftext = postText)
