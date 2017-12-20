@@ -17,14 +17,15 @@ import os
 #Create a reddit instance using the config settings stored in praw.ini
 reddit = praw.Reddit('bot1')
 
-#comments_read.txt stores the ID of comments that have already been read by the bot. This keeps the bot from counting the same "Hitler" more than once
-if not os.path.isfile("commentsRead.txt"):
-	commentsRead = []
+#commentsWithHitler.txt stores the ID of comments that have "Hitler" and have already been read by the bot.
+# This keeps the bot from counting the same "Hitler" more than once
+if not os.path.isfile("commentsWithHitler.txt"):
+	hitlerIDs = []
 else:
-	with open("commentsRead.txt","r") as f:
-		commentsRead = f.read()
-		commentsRead = commentsRead.split("\n")
-		commentsRead = list(filter(None, commentsRead))
+	with open("commentsWithHitler.txt","r") as f:
+		hitlerIDs = f.read()
+		hitlerIDs = hitlerIDs.split("\n")
+		hitlerIDs = list(filter(None, hitlerIDs))
 
 if not os.path.isfile("numHitler.txt"):
 	hitlerCount = 0
@@ -32,27 +33,35 @@ else:
 	with open("numHitler.txt","r") as f:
 		hitlerCount = int(f.read())
 
+links = []
 
 subreddit = reddit.subreddit('politics') #Selecting our subreddit
 
-for submission in subreddit.hot(limit=10): 			#Get the posts from that subreddit
-	
+print("READY FOR HITLERS")
+for submission in subreddit.hot(limit=1): 			#Get the posts from that subreddit
+	print submission.title + "\n\n"
 	#The comment section on a Reddit post only shows the first few comments
 	#The rest are not loaded until the user clicks the 'load more comments' link
 	#The replace_more() function loads the comments hidden behind this link
 	submission.comments.replace_more(limit=None)		
-
 	
+	print(str(len(submission.comments.list())))
 	for comment in submission.comments.list():
-		if comment.id not in commentsRead:
-			if re.search("hitler", comment.body, re.IGNORECASE):
-				print(comment.body)
+		if re.search("hitler", comment.body, re.IGNORECASE):
+			if comment.id not in hitlerIDs:
+				l = "www.reddit.com" + comment.permalink
+				print l
+				links.append(l)
 				hitlerCount = hitlerCount+1
-			commentsRead.append(comment.id)
+				hitlerIDs.append(comment.id)
 
-with open("commentsRead.txt","w") as f:
-	for commentID in commentsRead:
+with open("commentsWithHitler.txt","w") as f:
+	for commentID in hitlerIDs:
 		f.write(commentID + "\n")
 
 with open("numHitler.txt","w") as f:
 	f.write(str(hitlerCount)+"\n")
+
+with open("linksToHitler.txt","w") as f:
+	for link in links:
+		f.write(link + "\n")
