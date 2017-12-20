@@ -3,7 +3,7 @@
 #Alex M Brown
 #12/20/2017
 #
-#hitlerBot.py - Navigates r/MarchAgainstTrump and keeps tracks of how many times people mention Hitler
+#hitlerBot.py - Navigates r/politics and keeps tracks of how many times people mention Hitler
 #		The first iteration will simply count the number of "Hitler"s on the front page.
 #		I would like to later have the bot track the number of "Hitler"s by date.
 #
@@ -18,18 +18,24 @@ import os
 reddit = praw.Reddit('bot1')
 
 #comments_read.txt stores the ID of comments that have already been read by the bot. This keeps the bot from counting the same "Hitler" more than once
-if not os.path.isfile("comments_read.txt"):
-	comments_read = []
+if not os.path.isfile("commentsRead.txt"):
+	commentsRead = []
 else:
-	with open("comments_read.txt","r") as f:
-		comments_read = f.read()
-		comments_read = comments_read.split("\n")
-		comments_read = list(filter(None, comments_read))
+	with open("commentsRead.txt","r") as f:
+		commentsRead = f.read()
+		commentsRead = commentsRead.split("\n")
+		commentsRead = list(filter(None, commentsRead))
+
+if not os.path.isfile("numHitler.txt"):
+	hitlerCount = 0
+else:
+	with open("numHitler.txt","r") as f:
+		hitlerCount = int(f.read())
 
 
-subreddit = reddit.subreddit('Justletmetest') #Selecting our subreddit
+subreddit = reddit.subreddit('politics') #Selecting our subreddit
 
-for submission in subreddit.hot(limit=1): 			#Get the posts from that subreddit
+for submission in subreddit.hot(limit=10): 			#Get the posts from that subreddit
 	
 	#The comment section on a Reddit post only shows the first few comments
 	#The rest are not loaded until the user clicks the 'load more comments' link
@@ -38,11 +44,15 @@ for submission in subreddit.hot(limit=1): 			#Get the posts from that subreddit
 
 	
 	for comment in submission.comments.list():
-		if comment.id not in comments_read:
-			if re.search("bot", comment.body, re.IGNORECASE):
+		if comment.id not in commentsRead:
+			if re.search("hitler", comment.body, re.IGNORECASE):
 				print(comment.body)
-				comments_read.append(comment.id)
+				hitlerCount = hitlerCount+1
+			commentsRead.append(comment.id)
 
-with open("comments_read.txt","w") as f:
-	for comment_id in comments_read:
-		f.write(comment_id + "\n")
+with open("commentsRead.txt","w") as f:
+	for commentID in commentsRead:
+		f.write(commentID + "\n")
+
+with open("numHitler.txt","w") as f:
+	f.write(str(hitlerCount)+"\n")
