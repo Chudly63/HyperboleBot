@@ -87,7 +87,7 @@ with open("numHitler.txt","w") as f:
 
 #Track our day-to-day findings in a csv file
 with open("TrackingHitler.csv","a") as f:
-	f.write(date + "," + sessionHitlerCount +  "\n")
+	f.write(date + "," + str(sessionHitlerCount) +  "\n")
  
 
 #Begin constructing the bot's post
