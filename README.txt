@@ -1,20 +1,25 @@
 Reddit Hyperbole Bot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+www.reddit.com/u/HitlerFallacyBot
+www.reddit.com/r/TheHitlerFallacy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This bot keeps track of how many times someone mentions Hitler on r/Politics
 
 This project is meant to give me more practice with praw (Pyton Reddit API Wrapper)
 
-The bot stores the ID's of the comments that have Hitler in them and produces a list of links to these comments.
+This bot works by reading all of the comments on all of the posts in the top section of r/Politics for the last 24 hours.
+Whenever the bot finds a comment with "Hitler" in it, it saves the link and the ID of that comment.
+After it finishes reading all the comments for the day, it creates a reddit post on r/TheHitlerFallacy with all the links to the comments it found.
 
-I'm thinking about having this script run every day and produce a reddit post linking to all the "Hitler"s that were posted that day. Might be too much though considering how much
-is posted to r/politics
+The bot keeps a running total of all the "Hitler"s it finds on r/Politics and posts this total with the links.
+It also writes each day's total to a csv file along with the date. I plan on using this file to create some pretty graphs after letting this bot run for a while.
 
-I have this script run through every post in the top section for the last 24 hours. This lets me see everything that was posted that day.
-However, this method misses all comments posted that day on posts that were more than 24 hours old. 
+The biggest problem with the current version of the bot is that it does not read comments that were posted on posts older than 24 hours.
+If someone were to post a comment with "Hitler" in it on a post that was more than a day old, the bot would not find it.
 
-After the bot runs, it posts all of the links to the comments it found on r/TheHitlerFallacy
+
 
 Future Plans:
 	+Be able to read comments on older posts that were posted in the last 24 hours
 	+Optimization: Current program takes a long time to process large threads. New to praw so this may be too difficult/impossible
+	+Rasberry Pi integration
