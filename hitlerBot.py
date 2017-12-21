@@ -54,7 +54,7 @@ date = str(now.month) + "/" + str(now.day) + "/" + str(now.year)
 titleText = "Hitler Hunt for " + date
 
 #Select subreddits
-subreddit = reddit.subreddit('politics')
+subreddit = reddit.subreddit('Politics')
 postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
 #Read all the posts from the last 24 hours
@@ -101,8 +101,8 @@ with open("linksToHitler.txt","w") as f:
 		postText = postText + "\n" + link + "\n"
 
 #Finish the bot's post
-postText = postText + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\nSeig Heil! I mean... Beep Boop, I am a robot.\n\nMy purpose is to find and link comments in r/politics."
-postText = postText + "\n\nSince my birth, I have found a total of " + str(hitlerCount) + " Hitlers in r/politics."
+postText = postText + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\nSeig Heil! I mean... Beep Boop, I am a robot.\n\nMy purpose is to find and link comments in r/Politics "
+postText = postText + "that contain the word 'Hitler'\n\nSince my birth, I have found a total of " + str(hitlerCount) + " Hitlers in r/Politics."
 
 #Submit the post to r/TheHitlerFallacy
 postSubreddit.submit(titleText, selftext = postText)
