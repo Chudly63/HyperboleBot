@@ -13,6 +13,7 @@ import praw
 import pdb
 import re
 import os
+import datetime
 
 #Create a reddit instance using the config settings stored in praw.ini
 reddit = praw.Reddit('bot1')
@@ -34,21 +35,28 @@ else:
 	with open("numHitler.txt","r") as f:
 		hitlerCount = int(f.read())
 
+sessionHitlerCount = 0
 
-if not os.path.isfile("linksToHitler.txt"):
-	links = []
-else:
-	with open("linksToHitler.txt","r") as f:
-		links = f.read()
-		links = links.split("\n")
-		links = list(filter(None, links))
+#if not os.path.isfile("linksToHitler.txt"):
+#	links = []
+#else:
+#	with open("linksToHitler.txt","r") as f:
+#		links = f.read()
+#		links = links.split("\n")
+#		links = list(filter(None, links))
+
+links = []
+
+now = datetime.datetime.now()
+date = str(now.month) + "/" + str(now.day) + "/" + str(now.year)
+titleText = "Hitler Hunt for " + date
 
 
 subreddit = reddit.subreddit('politics') #Selecting our subreddit
 postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
 print("READY FOR HITLERS")
-for submission in subreddit.top('day',limit=1): 			#Get the posts from that subreddit
+for submission in subreddit.top('day',limit=None): 			#Get the posts from that subreddit
 	print submission.title 
 	#The comment section on a Reddit post only shows the first few comments
 	#The rest are not loaded until the user clicks the 'load more comments' link
@@ -62,6 +70,7 @@ for submission in subreddit.top('day',limit=1): 			#Get the posts from that subr
 				print l
 				links.append(l)
 				hitlerCount = hitlerCount+1
+				sessionHitlerCount = sessionHitlerCount+1
 				hitlerIDs.append(comment.id)
 
 with open("commentsWithHitler.txt","w") as f:
@@ -72,11 +81,15 @@ with open("numHitler.txt","w") as f:
 	f.write(str(hitlerCount)+"\n")
 
 
-postText = "I found " + str(hitlerCount) + " Hitlers in r/Politics today.\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+postText = "I found " + str(sessionHitlerCount) + " Hitlers in r/Politics today.\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
 
 
 with open("linksToHitler.txt","w") as f:
 	for link in links:
 		f.write(link + "\n")
-		postText = postText + "\n" + link
-postSubreddit.submit('Today', selftext = postText)
+		postText = postText + "\n" + link + "\n"
+
+postText = postText + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\nSeig Heil! I mean... Beep Boop, I am a robot.\n\nMy purpose is to find and link comments in r/politics."
+postText = postText + "\n\nSince my birth, I have found a total of " + str(hitlerCount) + " Hitlers in r/politics."
+
+postSubreddit.submit(titleText, selftext = postText)
