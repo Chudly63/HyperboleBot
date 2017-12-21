@@ -5,7 +5,7 @@ www.reddit.com/r/TheHitlerFallacy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This bot keeps track of how many times someone mentions Hitler on r/Politics
 
-This project is meant to give me more practice with praw (Pyton Reddit API Wrapper)
+This project is meant to give me more practice with praw (Python Reddit API Wrapper)
 
 This bot works by reading all of the comments on all of the posts in the top section of r/Politics for the last 24 hours.
 Whenever the bot finds a comment with "Hitler" in it, it saves the link and the ID of that comment.
