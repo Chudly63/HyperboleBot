@@ -32,30 +32,28 @@ else:
 
 
 #Load our running total
-if not os.path.isfile("numHitler.txt"):
+if not os.path.isfile("stats.txt"):
 	hitlerCount = 0
-else:
-	with open("numHitler.txt","r") as f:
-		hitlerCount = int(f.read())
-
-
-if not os.path.isfile("recordHitler.txt"):
 	recordHitler = 0
+	commentCount = 0
 else:
-	with open("recordHitler.txt","r") as f:
-		recordHitler = int(f.read())
+	with open("stats.txt","r") as f:
+		stats = f.read()
+		stats = stats.split("\n")
+		stats = list(filter(None, stats))
+	hitlerCount = int(stats[0])
+	recordHitler = int(stats[1])
+	commentCount = int(stats[2])
 
 
-sessionHitlerCount = 0
-
-
-#if not os.path.isfile("linksToHitler.txt"):
-#	links = []
+#if not os.path.isfile("recordHitler.txt"):
+#	recordHitler = 0
 #else:
-#	with open("linksToHitler.txt","r") as f:
-#		links = f.read()
-#		links = links.split("\n")
-#		links = list(filter(None, links))
+#	with open("recordHitler.txt","r") as f:
+#		recordHitler = int(f.read())
+
+
+
 
 
 #The links to the comments with "Hitler" in them
@@ -69,22 +67,25 @@ titleText = "Hitler Hunt for " + date
 
 
 #Select subreddits
-subreddit = reddit.subreddit('politics')
+subreddit = reddit.subreddit('Justletmetest')
 postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
 submissionsRead = 0
+sessionCommentCount = 0
+sessionHitlerCount = 0
 
 print "Beginning Session for: "+ str(now.month) + "/" + str(now.day) + "/" + str(now.year) + " " + str(now.hour) + ":" + str(now.minute)
 
 #Read all the posts from the last 24 hours
-for submission in subreddit.top('day',limit=None):
+for submission in subreddit.top('week',limit=None):
 	submissionsRead += 1
-	print "\nSumbission "+str(submissionsRead)
+	print "---Sumbission "+str(submissionsRead)
 	#The comment section on a Reddit post only shows the first few comments
 	#The rest are not loaded until the user clicks the 'load more comments' link
 	#The replace_more() function loads the comments hidden behind this link
 	submission.comments.replace_more(limit=None)		
-
+	print str(len(submission.comments.list()))
+	sessionCommentCount += len(submission.comments.list())
 	for comment in submission.comments.list():
 		if re.search("hitler", comment.body, re.IGNORECASE):
 			if comment.id not in hitlerIDs:
@@ -92,20 +93,16 @@ for submission in subreddit.top('day',limit=None):
 				l = "www.reddit.com" + comment.permalink
 				print l
 				links.append(l)
-				sessionHitlerCount = sessionHitlerCount+1
+				sessionHitlerCount += 1
 				hitlerIDs.append(comment.id)
 
-hitlerCount = hitlerCount + sessionHitlerCount
+hitlerCount += sessionHitlerCount
+commentCount += sessionCommentCount
 
 #Save the comments we found
 with open("commentsWithHitler.txt","w") as f:
 	for commentID in hitlerIDs:
 		f.write(commentID + "\n")
-
-
-#Save the running total
-with open("numHitler.txt","w") as f:
-	f.write(str(hitlerCount)+"\n")
 
 
 #Track our day-to-day findings in a csv file
@@ -118,11 +115,10 @@ postText = "##I found " + str(sessionHitlerCount) + " Hitlers in r/Politics toda
 
 #Check for a new record!
 if sessionHitlerCount > recordHitler:
-	postText = postText + "\nDING DING DING! New Record!!\n\n***\n\n"
-	with open("recordHitler.txt","w") as f:
-		f.write(str(sessionHitlerCount)+"\n")
+	postText += "\nDING DING DING! New Record!!\n\n***\n\n"
+	recordHitler = sessionHitlerCount
 elif sessionHitlerCount == recordHitler:
-	postText = postText + "\nWow, a tie for the record!\n\n***\n\n"
+	postText += "\nWow, a tie for the record!\n\n***\n\n"
 
 
 #Save the links and add them to the bot's post
@@ -131,18 +127,26 @@ with open("linksToHitler.txt","w") as f:
 		f.write(link + "\n")
 		postText = postText + "\n^" + link + "\n"
 if len(links) == 0:
-	postText += "\nI have no links to share. I am sorry, friends\n"
+	postText += "\nI have no links to share. I am sorry, friends.\n"
+
+
+#Save the running total
+with open("stats.txt","w") as f:
+	f.write(str(hitlerCount)+"\n")
+	f.write(str(recordHitler)+"\n")
+	f.write(str(commentCount)+"\n")
 
 
 #Finish the bot's post
-postText = postText + "\n\n***\n\nSieg Heil! I mean... Beep Boop, I am a robot.\n\nMy purpose is to find and link comments in r/Politics "
-postText = postText + "that contain the word 'Hitler'\n\nSince my birth, I have found a total of " + str(hitlerCount) + " Hitlers in r/Politics."
+postText += "\n\n***\n\nSieg Heil! I mean... Beep Boop, I am a robot.\n\nMy purpose is to find and link comments in r/Politics "
+postText +="that contain the word 'Hitler'\n\nSince my birth, I have found a total of " + str(hitlerCount) + " Hitlers in r/Politics.\n\n"
+postText +="Today, I read " + str(sessionCommentCount) + " comments. In total, I have read " + str(commentCount) + " comments."
 
 
 #Submit the post to r/TheHitlerFallacy
-postSubreddit.submit(titleText, selftext = postText)
+#postSubreddit.submit(titleText, selftext = postText)
 
-#print postText
+print postText
 
 #Display ending notification
 now = datetime.datetime.now()
