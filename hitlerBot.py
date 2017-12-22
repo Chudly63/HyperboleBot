@@ -4,7 +4,7 @@
 #12/20/2017
 #
 #hitlerBot.py - Navigates r/politics and keeps tracks of how many times people mention Hitler
-#		This program runs every 24 hours at 11:50 EST
+#		This program runs every 24 hours at 23:50 EST
 #		It reads all the comments on posts in r/Politics that were posted that day
 #		Any comments that mention Hitler are saved
 #		The bot posts all the links it finds each day to r/TheHitlerFallacy
@@ -114,32 +114,35 @@ with open("TrackingHitler.csv","a") as f:
  
 
 #Begin constructing the bot's post
-postText = "I found " + str(sessionHitlerCount) + " Hitlers in r/Politics today.\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+postText = "##I found " + str(sessionHitlerCount) + " Hitlers in r/Politics today.\n\n***\n\n"
 
 #Check for a new record!
 if sessionHitlerCount > recordHitler:
-	postText = postText + "\nDING DING DING! New Record!!\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+	postText = postText + "\nDING DING DING! New Record!!\n\n***\n\n"
 	with open("recordHitler.txt","w") as f:
 		f.write(str(sessionHitlerCount)+"\n")
 elif sessionHitlerCount == recordHitler:
-	postText = postText + "\nWow, a tie for the record!\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+	postText = postText + "\nWow, a tie for the record!\n\n***\n\n"
 
 
 #Save the links and add them to the bot's post
 with open("linksToHitler.txt","w") as f:
 	for link in links:
 		f.write(link + "\n")
-		postText = postText + "\n" + link + "\n"
+		postText = postText + "\n^" + link + "\n"
+if len(links) == 0:
+	postText += "\nI have no links to share. I am sorry, friends\n"
 
 
 #Finish the bot's post
-postText = postText + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\nSieg Heil! I mean... Beep Boop, I am a robot.\n\nMy purpose is to find and link comments in r/Politics "
+postText = postText + "\n\n***\n\nSieg Heil! I mean... Beep Boop, I am a robot.\n\nMy purpose is to find and link comments in r/Politics "
 postText = postText + "that contain the word 'Hitler'\n\nSince my birth, I have found a total of " + str(hitlerCount) + " Hitlers in r/Politics."
 
 
 #Submit the post to r/TheHitlerFallacy
 postSubreddit.submit(titleText, selftext = postText)
 
+#print postText
 
 #Display ending notification
 now = datetime.datetime.now()
