@@ -46,7 +46,6 @@ else:
 		recordHitler = int(f.read())
 
 
-print str(hitlerCount)
 sessionHitlerCount = 0
 
 
@@ -73,10 +72,14 @@ titleText = "Hitler Hunt for " + date
 subreddit = reddit.subreddit('politics')
 postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
+submissionsRead = 0
+
+print "Beginning Session for: "+ str(now.month) + "/" + str(now.day) + "/" + str(now.year) + " " + str(now.hour) + ":" + str(now.minute)
 
 #Read all the posts from the last 24 hours
 for submission in subreddit.top('day',limit=None):
-
+	submissionsRead += 1
+	print "\nSumbission "+str(submissionsRead)
 	#The comment section on a Reddit post only shows the first few comments
 	#The rest are not loaded until the user clicks the 'load more comments' link
 	#The replace_more() function loads the comments hidden behind this link
@@ -89,10 +92,10 @@ for submission in subreddit.top('day',limit=None):
 				l = "www.reddit.com" + comment.permalink
 				print l
 				links.append(l)
-				hitlerCount = hitlerCount+1
 				sessionHitlerCount = sessionHitlerCount+1
 				hitlerIDs.append(comment.id)
 
+hitlerCount = hitlerCount + sessionHitlerCount
 
 #Save the comments we found
 with open("commentsWithHitler.txt","w") as f:
@@ -136,3 +139,8 @@ postText = postText + "that contain the word 'Hitler'\n\nSince my birth, I have 
 
 #Submit the post to r/TheHitlerFallacy
 postSubreddit.submit(titleText, selftext = postText)
+
+
+#Display ending notification
+now = datetime.datetime.now()
+print "Ending Session for: "+ str(now.month) + "/" + str(now.day) + "/" + str(now.year) + " " + str(now.hour) + ":" + str(now.minute)
