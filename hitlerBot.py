@@ -14,7 +14,7 @@ import pdb
 import re
 import os
 import datetime
-
+import csv
 
 #Create a reddit instance using the config settings stored in praw.ini
 reddit = praw.Reddit('bot2')
@@ -31,7 +31,7 @@ else:
 		hitlerIDs = list(filter(None, hitlerIDs))
 
 
-#Load our running total
+#Load our Stats
 if not os.path.isfile("stats.txt"):
 	hitlerCount = 0
 	recordHitler = 0
@@ -47,6 +47,13 @@ else:
 	commentCount = int(stats[2])
 	runCount = int(stats[3]) + 1
 
+if not os.path.isfile("Redditors.csv"):
+	reds = []
+else:
+	r = csv.reader(open("Redditors.csv"))
+	reds = [l for l in r]
+
+print reds
 
 #The links to the comments with "Hitler" in them
 links = []
@@ -58,9 +65,13 @@ date = str(now.month) + "/" + str(now.day) + "/" + str(now.year)
 titleText = "Hitler Hunt for " + date
 
 
-#Select subreddits
+#Select subreddits MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
 subreddit = reddit.subreddit('Politics')
 postSubreddit = reddit.subreddit('TheHitlerFallacy')
+
+#Subreddits for testing
+#subreddit = reddit.subreddit('Justletmetest')
+#postSubreddit = reddit.subreddit('Justletmetest')
 
 submissionsRead = 0
 sessionCommentCount = 0
@@ -86,6 +97,15 @@ for submission in subreddit.top('day',limit=None):
 				links.append(l)
 				sessionHitlerCount += 1
 				hitlerIDs.append(comment.id)
+				author = comment.author
+				noted = False
+				for i in range(len(reds)):
+					if reds[i][0] == author:
+						n = int(reds[i][1]) + 1
+						reds[i][1] = str(n)
+						noted = True
+				if not noted:
+					reds.append([author,"1"])				
 
 hitlerCount += sessionHitlerCount
 commentCount += sessionCommentCount
@@ -108,15 +128,15 @@ postText = "##I found " + str(sessionHitlerCount) + " Hitlers in r/Politics toda
 if sessionHitlerCount > recordHitler:
 	postText += "\nDING DING DING! New Record!!\n\n***\n\n"
 	recordHitler = sessionHitlerCount
+	with open("RecordHistory.csv","a") as f:
+		f.write(date + "," + str(recordHitler) + "\n")
 elif sessionHitlerCount == recordHitler:
 	postText += "\nWow, a tie for the record!\n\n***\n\n"
 
 
-#Save the links and add them to the bot's post
-with open("linksToHitler.txt","w") as f:
-	for link in links:
-		f.write(link + "\n")
-		postText = postText + "\n^" + link + "\n"
+#Add links to the post
+for link in links:
+	postText = postText + "\n^" + link + "\n"
 if len(links) == 0:
 	postText += "\nI have no links to share. I am sorry, friends.\n"
 
@@ -127,6 +147,9 @@ with open("stats.txt","w") as f:
 	f.write(str(recordHitler)+"\n")
 	f.write(str(commentCount)+"\n")
 	f.write(str(runCount)+"\n")
+
+w = csv.writer(open("Redditors.csv","w"))
+w.writerows(reds)
 
 averageHitlers = hitlerCount/runCount
 
