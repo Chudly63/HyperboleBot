@@ -33,10 +33,10 @@ else:
 
 #Load our Stats
 if not os.path.isfile("stats.txt"):
-	hitlerCount = 0
-	recordHitler = 0
-	commentCount = 0
-	runCount = 1
+	hitlerCount = 0		#total number of hitlers found (all time)
+	recordHitler = 0	#greatest number of hitlers found in one day
+	commentCount = 0	#total comments read (all time)
+	runCount = 1		#total number of program runs
 else:
 	with open("stats.txt","r") as f:
 		stats = f.read()
@@ -47,13 +47,13 @@ else:
 	commentCount = int(stats[2])
 	runCount = int(stats[3]) + 1
 
+#Redditors.csv lists redditors by name and the number of times they posted a comment on r/Politics with "Hitler"
 if not os.path.isfile("Redditors.csv"):
 	reds = []
 else:
 	r = csv.reader(open("Redditors.csv"))
 	reds = [l for l in r]
 
-print reds
 
 #The links to the comments with "Hitler" in them
 links = []
@@ -65,33 +65,38 @@ date = str(now.month) + "/" + str(now.day) + "/" + str(now.year)
 titleText = "Hitler Hunt for " + date
 
 
-#Select subreddits MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
+#Subreddits for running ::  MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
 subreddit = reddit.subreddit('Politics')
 postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
-#Subreddits for testing
+#Subreddits for testing :: MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
 #subreddit = reddit.subreddit('Justletmetest')
 #postSubreddit = reddit.subreddit('Justletmetest')
 
-submissionsRead = 0
-sessionCommentCount = 0
-sessionHitlerCount = 0
+submissionsRead = 0		#Submissions read this session (not saved)
+sessionCommentCount = 0		#Comments read this session
+sessionHitlerCount = 0		#Hitlers found this session
 
+
+#Print starting message for debugging
 print "Beginning Session for: "+ str(now.month) + "/" + str(now.day) + "/" + str(now.year) + " " + str(now.hour) + ":" + str(now.minute)
+
 
 #Read all the posts from the last 24 hours
 for submission in subreddit.top('day',limit=None):
 	submissionsRead += 1
-	print "---Sumbission "+str(submissionsRead)
+	print "---Sumbission "+str(submissionsRead)	#Useful for debugging
+
 	#The comment section on a Reddit post only shows the first few comments
 	#The rest are not loaded until the user clicks the 'load more comments' link
 	#The replace_more() function loads the comments hidden behind this link
-	submission.comments.replace_more(limit=None)		
+	submission.comments.replace_more(limit=None)	#Loads all comments in the submission
+		
 	sessionCommentCount += len(submission.comments.list())
 	for comment in submission.comments.list():
 		if re.search("hitler", comment.body, re.IGNORECASE):
 			if comment.id not in hitlerIDs:
-				#Construct the link, add it to the list, increment the hitler counter, save the comment ID
+				#Construct the link, add it to the list, increment the hitler counter, save the comment ID, update Redditors.csv
 				l = "www.reddit.com" + comment.permalink
 				print l
 				links.append(l)
@@ -107,8 +112,10 @@ for submission in subreddit.top('day',limit=None):
 				if not noted:
 					reds.append([author,"1"])				
 
+#Calculate new totals
 hitlerCount += sessionHitlerCount
-commentCount += sessionCommentCount
+commentCount += sessionCommentCount	
+
 
 #Save the comments we found
 with open("commentsWithHitler.txt","w") as f:
@@ -123,6 +130,7 @@ with open("TrackingHitler.csv","a") as f:
 
 #Begin constructing the bot's post
 postText = "##I found " + str(sessionHitlerCount) + " Hitlers in r/Politics today.\n\n***\n\n"
+
 
 #Check for a new record!
 if sessionHitlerCount > recordHitler:
@@ -148,10 +156,13 @@ with open("stats.txt","w") as f:
 	f.write(str(commentCount)+"\n")
 	f.write(str(runCount)+"\n")
 
+#Save redditors
 w = csv.writer(open("Redditors.csv","w"))
 w.writerows(reds)
 
+
 averageHitlers = hitlerCount/runCount
+
 
 #Finish the bot's post
 postText += "\n\n***\n\nSieg Heil! I mean... Beep Boop, I am a robot.\n\nMy purpose is to find and link comments in r/Politics "
@@ -163,8 +174,9 @@ postText += "Today, I read " + str(sessionCommentCount) + " comments. In total, 
 #Submit the post to r/TheHitlerFallacy
 postSubreddit.submit(titleText, selftext = postText)
 
+#For testing
 #print postText
 
-#Display ending notification
+#Display ending notification for debugging
 now = datetime.datetime.now()
 print "Ending Session for: "+ str(now.month) + "/" + str(now.day) + "/" + str(now.year) + " " + str(now.hour) + ":" + str(now.minute)
