@@ -57,7 +57,9 @@ else:
 
 #The links to the comments with "Hitler" in them
 links = []
+quotes = []
 
+postBody = ""
 
 #Construct the post title
 now = datetime.datetime.now()
@@ -66,12 +68,12 @@ titleText = "Hitler Hunt for " + date
 
 
 #Subreddits for running ::  MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
-subreddit = reddit.subreddit('Politics')
-postSubreddit = reddit.subreddit('TheHitlerFallacy')
+#subreddit = reddit.subreddit('Politics')
+#postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
 #Subreddits for testing :: MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
-#subreddit = reddit.subreddit('Justletmetest')
-#postSubreddit = reddit.subreddit('Justletmetest')
+subreddit = reddit.subreddit('Justletmetest')
+postSubreddit = reddit.subreddit('Justletmetest')
 
 submissionsRead = 0		#Submissions read this session (not saved)
 sessionCommentCount = 0		#Comments read this session
@@ -83,7 +85,7 @@ print "Beginning Session for: "+ str(now.month) + "/" + str(now.day) + "/" + str
 
 
 #Read all the posts from the last 24 hours
-for submission in subreddit.top('day',limit=None):
+for submission in subreddit.top('month',limit=None):
 	submissionsRead += 1
 	print "---Sumbission "+str(submissionsRead)	#Useful for debugging
 
@@ -97,7 +99,7 @@ for submission in subreddit.top('day',limit=None):
 		if re.search("hitler", comment.body, re.IGNORECASE):
 			if comment.id not in hitlerIDs:
 				#Construct the link, add it to the list, increment the hitler counter, save the comment ID, update Redditors.csv
-				l = "www.reddit.com" + comment.permalink
+				l = "https://www.reddit.com" + comment.permalink
 				print l
 				links.append(l)
 				sessionHitlerCount += 1
@@ -110,8 +112,21 @@ for submission in subreddit.top('day',limit=None):
 						reds[i][1] = str(n)
 						noted = True
 				if not noted:
-					reds.append([author,"1"])				
+					reds.append([author,"1"])
+				body = comment.body
+				x = [sentence for sentence in body.split('.') if 'hitler' in sentence.lower()	]
+				quotes.append('"' + x[0] + '" - ' + str(comment.author))
+				postBody += '\n[' + '"' + x[0] + '."](' + l + ') - ' + str(comment.author) + '\n'
 
+
+
+#
+#if len(links) == 0:
+#	postText += "\nI have no links to share. I am sorry, friends.\n"
+#else:
+#	for i in range(len(links)):
+#		postText = postText + "\n["+ quotes[i] + "](" + links[i] + ")\n"
+#
 #Calculate new totals
 hitlerCount += sessionHitlerCount
 commentCount += sessionCommentCount	
@@ -143,10 +158,16 @@ elif sessionHitlerCount == recordHitler:
 
 
 #Add links to the post
-for link in links:
-	postText = postText + "\n^" + link + "\n"
-if len(links) == 0:
-	postText += "\nI have no links to share. I am sorry, friends.\n"
+#if len(links) == 0:
+#	postText += "\nI have no links to share. I am sorry, friends.\n"
+#else:
+#	for i in range(len(links)):
+#		postText = postText + "\n["+ quotes[i] + "](" + links[i] + ")\n"
+
+if sessionHitlerCount == 0:
+	postBody = "I have no links to share. I am sorry, friends.\n"
+
+postText += postBody
 
 
 #Save the running total
@@ -172,10 +193,10 @@ postText += "Today, I read " + str(sessionCommentCount) + " comments. In total, 
 
 
 #Submit the post to r/TheHitlerFallacy
-postSubreddit.submit(titleText, selftext = postText)
+#postSubreddit.submit(titleText, selftext = postText)
 
 #For testing
-#print postText
+print postText
 
 #Display ending notification for debugging
 now = datetime.datetime.now()
