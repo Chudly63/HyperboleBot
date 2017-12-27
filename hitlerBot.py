@@ -55,11 +55,8 @@ else:
 	reds = [l for l in r]
 
 
-#The links to the comments with "Hitler" in them
-links = []
-quotes = []
-
 postBody = ""
+
 
 #Construct the post title
 now = datetime.datetime.now()
@@ -68,12 +65,12 @@ titleText = "Hitler Hunt for " + date
 
 
 #Subreddits for running ::  MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
-#subreddit = reddit.subreddit('Politics')
-#postSubreddit = reddit.subreddit('TheHitlerFallacy')
+subreddit = reddit.subreddit('Politics')
+postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
 #Subreddits for testing :: MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
-subreddit = reddit.subreddit('Justletmetest')
-postSubreddit = reddit.subreddit('Justletmetest')
+#subreddit = reddit.subreddit('Justletmetest')
+#postSubreddit = reddit.subreddit('Justletmetest')
 
 submissionsRead = 0		#Submissions read this session (not saved)
 sessionCommentCount = 0		#Comments read this session
@@ -85,7 +82,8 @@ print "Beginning Session for: "+ str(now.month) + "/" + str(now.day) + "/" + str
 
 
 #Read all the posts from the last 24 hours
-for submission in subreddit.top('month',limit=None):
+for submission in subreddit.top('day',limit=None):
+	hitlerFound = False
 	submissionsRead += 1
 	print "---Sumbission "+str(submissionsRead)	#Useful for debugging
 
@@ -98,10 +96,12 @@ for submission in subreddit.top('month',limit=None):
 	for comment in submission.comments.list():
 		if re.search("hitler", comment.body, re.IGNORECASE):
 			if comment.id not in hitlerIDs:
-				#Construct the link, add it to the list, increment the hitler counter, save the comment ID, update Redditors.csv
+				if not hitlerFound: 
+					postBody += '\n#####' + submission.title + '\n\n'
+					hitlerFound = True
+				#Construct the quote, increment the hitler counter, save the comment ID, update Redditors.csv
 				l = "https://www.reddit.com" + comment.permalink
 				print l
-				links.append(l)
 				sessionHitlerCount += 1
 				hitlerIDs.append(comment.id)
 				author = comment.author
@@ -114,19 +114,21 @@ for submission in subreddit.top('month',limit=None):
 				if not noted:
 					reds.append([author,"1"])
 				body = comment.body
-				x = [sentence for sentence in body.split('.') if 'hitler' in sentence.lower()	]
-				quotes.append('"' + x[0] + '" - ' + str(comment.author))
-				postBody += '\n[' + '"' + x[0] + '."](' + l + ') - ' + str(comment.author) + '\n'
+			
+				#Find the sentence with "Hitler" in it, quote it, format it to a reddit hyperlink, and add the author
+				#A reddit link is formatted as such: [*Quote*](*Link*) - Author. This will display the quote as a link to *Link*
+
+				y = re.split("(\.|\?|\!|\n)",body)
+				x = [sentence for sentence in y if 'hitler' in sentence.lower()]
+				target = x[0].replace("\n","")
+				target = target.replace('"','')
+				target = target.replace('>','')
+				while target[:1] == " " :
+					target = target[1:]	#Remove the first character of the quote if it is blank
+				postBody += '\n["' + target + '."](' + l + ') - ' + str(comment.author) + '\n'
+				
 
 
-
-#
-#if len(links) == 0:
-#	postText += "\nI have no links to share. I am sorry, friends.\n"
-#else:
-#	for i in range(len(links)):
-#		postText = postText + "\n["+ quotes[i] + "](" + links[i] + ")\n"
-#
 #Calculate new totals
 hitlerCount += sessionHitlerCount
 commentCount += sessionCommentCount	
@@ -158,15 +160,8 @@ elif sessionHitlerCount == recordHitler:
 
 
 #Add links to the post
-#if len(links) == 0:
-#	postText += "\nI have no links to share. I am sorry, friends.\n"
-#else:
-#	for i in range(len(links)):
-#		postText = postText + "\n["+ quotes[i] + "](" + links[i] + ")\n"
-
 if sessionHitlerCount == 0:
 	postBody = "I have no links to share. I am sorry, friends.\n"
-
 postText += postBody
 
 
@@ -190,13 +185,14 @@ postText += "\n\n***\n\nSieg Heil! I mean... Beep Boop, I am a robot.\n\nMy purp
 postText += "that contain the word 'Hitler'\n\nSince my birth, I have found a total of " + str(hitlerCount) + " Hitlers in r/Politics. "
 postText += "On average, I found " + str(averageHitlers) + " Hitlers per day.\n\n"
 postText += "Today, I read " + str(sessionCommentCount) + " comments. In total, I have read " + str(commentCount) + " comments."
+postText += "\n\n\n\n#I am in testing. I am not perfect. I am sorry"
 
 
 #Submit the post to r/TheHitlerFallacy
-#postSubreddit.submit(titleText, selftext = postText)
+postSubreddit.submit(titleText, selftext = postText)
 
 #For testing
-print postText
+#print postText
 
 #Display ending notification for debugging
 now = datetime.datetime.now()
