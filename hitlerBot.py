@@ -69,7 +69,7 @@ postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
 #Subreddits for testing :: MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
 #subreddit = reddit.subreddit('Justletmetest')
-#postSubreddit = reddit.subreddit('Justletmetest')
+postSubreddit = reddit.subreddit('Justletmetest')
 
 submissionsRead = 0		#Submissions read this session (not saved)
 sessionCommentCount = 0		#Comments read this session
@@ -80,57 +80,62 @@ sessionHitlerCount = 0		#Hitlers found this session
 print "Beginning Session for: "+ str(now.month) + "/" + str(now.day) + "/" + str(now.year) + " " + str(now.hour) + ":" + str(now.minute)
 
 
+
+submissionIDs = []
 #Read all the posts from the last 24 hours
 for submission in subreddit.top('day',limit=None):
-	hitlerFound = False
-	quotes = []
-	submissionsRead += 1
-	print "---Sumbission "+str(submissionsRead)	#Useful for debugging
-
-	#The comment section on a Reddit post only shows the first few comments
-	#The rest are not loaded until the user clicks the 'load more comments' link
-	#The replace_more() function loads the comments hidden behind this link
-	submission.comments.replace_more(limit=None)	#Loads all comments in the submission
-		
-	sessionCommentCount += len(submission.comments.list())
-	for comment in submission.comments.list():
-		if re.search("hitler", comment.body, re.IGNORECASE):
-			if comment.id not in hitlerIDs:
-				body = comment.body
-			
-				#Find the sentence with "Hitler" in it, quote it, format it to a reddit hyperlink, and add the author
-				y = re.split("(\.|\?|\!|\n)",body)
-				x = [sentence for sentence in y if 'hitler' in sentence.lower()]
-				target = x[0].replace("\n","") 	#Target becomes the sentence in the comment containing the word Hitler
-				target = target.replace('"','')
-				target = target.replace('>','') 
-				while target[:1] == " " :
-					target = target[1:]	#Remove the first character of the quote if it is blank
-				target = target[:1].upper() + target[1:]
-				if target not in quotes:	#Checks to see if someone is quoting a different comment in the same thread. Quoting a Hiler does not qualify as another Hitler	
-					if not hitlerFound: 
-						postBody += '\n#####' + submission.title + '\n\n'
-						hitlerFound = True
-					#Construct the quote, increment the hitler counter, save the comment ID, update Redditors.csv
-					l = "https://www.reddit.com" + comment.permalink
-					print l
-					sessionHitlerCount += 1
-					hitlerIDs.append(comment.id)
-					author = comment.author
-					noted = False
-					for i in range(len(reds)):
-						if reds[i][0] == author:
-							n = int(reds[i][1]) + 1
-							reds[i][1] = str(n)
-							noted = True
-					if not noted:
-						reds.append([author,"1"])
+	if submission.id not in submissionIDs:
+		submissionIDs.append(submission.id)
+		hitlerFound = False
+		quotes = []
+		submissionsRead += 1
+		print "---Sumbission "+str(submissionsRead)	#Useful for debugging
 	
-					#A reddit link is formatted as such: [*Quote*](*Link*) - Author. This will display the quote as a link to *Link*
-					postBody += '\n["' + target + '."](' + l + ') - ' + str(comment.author) + '\n'
-					quotes.append(target)
-
-
+		#The comment section on a Reddit post only shows the first few comments
+		#The rest are not loaded until the user clicks the 'load more comments' link
+		#The replace_more() function loads the comments hidden behind this link
+		submission.comments.replace_more(limit=None)	#Loads all comments in the submission
+		sessionCommentCount += len(submission.comments.list())
+		for comment in submission.comments.list():
+			if re.search("hitler", comment.body, re.IGNORECASE):
+				if comment.id not in hitlerIDs:
+					body = comment.body
+				
+					#Find the sentence with "Hitler" in it, quote it, format it to a reddit hyperlink, and add the author
+					y = re.split("(\.|\?|\!|\n)",body)
+					x = [sentence for sentence in y if 'hitler' in sentence.lower()]
+					target = x[0].replace("\n","") 	#Target becomes the sentence in the comment containing the word Hitler
+					target = target.replace('"','') 
+					target = target.replace('>','') 
+					target = target.replace('  ',' ') #Remove extra spaces between words.
+					while target[:1] == " " :
+						target = target[1:]	#Remove the first character of the quote if it is blank
+					target = target[:1].upper() + target[1:]
+					isLink = (target[:4] == "Com/" or target[:4] == "Org/" or target[:4] == "Net/" or target[:4] == "Gov/")
+					if target not in quotes and not isLink:	#Checks to see if someone is quoting a different comment in the same thread. Quoting a Hiler does not qualify as another Hitler	
+						if not hitlerFound: 
+							postBody += '\n#####' + submission.title + '\n\n'
+							hitlerFound = True
+						#Construct the quote, increment the hitler counter, save the comment ID, update Redditors.csv
+						l = "https://www.reddit.com" + comment.permalink
+						print l
+						sessionHitlerCount += 1
+						hitlerIDs.append(comment.id)
+						author = comment.author
+						noted = False
+						for i in range(len(reds)):
+							if reds[i][0] == author:
+								n = int(reds[i][1]) + 1
+								reds[i][1] = str(n)
+								noted = True
+						if not noted:
+							reds.append([author,"1"])
+		
+						#A reddit link is formatted as such: [*Quote*](*Link*) - Author. This will display the quote as a link to *Link*
+						postBody += '\n["' + target + '."](' + l + ') - ' + str(comment.author) + '\n'
+						quotes.append(target)
+	
+	
 #Calculate new totals
 hitlerCount += sessionHitlerCount
 commentCount += sessionCommentCount	
@@ -187,7 +192,7 @@ postText += "\n\n***\n\nSieg Heil! I mean... Beep Boop, I am a robot.\n\nMy purp
 postText += "that contain the word 'Hitler'\n\nSince my birth, I have found a total of " + str(hitlerCount) + " Hitlers in r/Politics. "
 postText += "On average, I found " + str(averageHitlers) + " Hitlers per day.\n\n"
 postText += "Today, I read " + str(sessionCommentCount) + " comments. In total, I have read " + str(commentCount) + " comments."
-postText += "\n\n\n\n#I am in testing. I am not perfect. I am sorry"
+postText += "\n\n\n\n#I am in my second phase of testing. I am not perfect. I am sorry. I love you."
 
 
 #Submit the post to r/TheHitlerFallacy
