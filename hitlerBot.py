@@ -79,7 +79,7 @@ sessionHitlerCount = 0		#Hitlers found this session
 #Print starting message for debugging
 print "Beginning Session for: "+ str(now.month) + "/" + str(now.day) + "/" + str(now.year) + " " + str(now.hour) + ":" + str(now.minute)
 
-
+maxSizeReached = False		#Reddit posts can only be 40000 characters. Almost every post will be under this limit, but if this is left unchecked, there is a chance the bot will be unable to post
 
 submissionIDs = []
 #Read all the posts from the last 24 hours
@@ -113,7 +113,7 @@ for submission in subreddit.top('day',limit=None):
 					target = target[:1].upper() + target[1:]
 					isLink = (target[:4] == "Com/" or target[:4] == "Org/" or target[:4] == "Net/" or target[:4] == "Gov/")
 					if target not in quotes and not isLink:	#Checks to see if someone is quoting a different comment in the same thread. Quoting a Hiler does not qualify as another Hitler	
-						if not hitlerFound: 
+						if not hitlerFound and not maxSizeReached: 
 							postBody += '\n#####' + submission.title + '\n\n'
 							hitlerFound = True
 						#Construct the quote, increment the hitler counter, save the comment ID, update Redditors.csv
@@ -132,7 +132,10 @@ for submission in subreddit.top('day',limit=None):
 							reds.append([author,"1"])
 		
 						#A reddit link is formatted as such: [*Quote*](*Link*) - Author. This will display the quote as a link to *Link*
-						postBody += '\n["' + target + '."](' + l + ') - ' + str(comment.author) + '\n'
+						if not maxSizeReached:
+							postBody += '\n["' + target + '."](' + l + ') - ' + str(comment.author) + '\n'
+						if len(postBody) >= 38000:
+							maxSizeReached = True
 						quotes.append(target)
 	
 	
@@ -140,6 +143,8 @@ for submission in subreddit.top('day',limit=None):
 hitlerCount += sessionHitlerCount
 commentCount += sessionCommentCount	
 
+if maxSizeReached:
+	postBody += "\n#Das ist schlecht! I've reached my limit! Some links may be missing from this post.\n"
 
 #Save the comments we found
 with open("commentsWithHitler.txt","w") as f:
