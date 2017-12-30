@@ -68,7 +68,7 @@ subreddit = reddit.subreddit('Politics')
 postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
 #Subreddits for testing :: MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
-#subreddit = reddit.subreddit('Justletmetest')
+subreddit = reddit.subreddit('Justletmetest')
 postSubreddit = reddit.subreddit('Justletmetest')
 
 submissionsRead = 0		#Submissions read this session (not saved)
@@ -83,7 +83,7 @@ maxSizeReached = False		#Reddit posts can only be 40000 characters. Almost every
 
 submissionIDs = []
 #Read all the posts from the last 24 hours
-for submission in subreddit.top('day',limit=None):
+for submission in subreddit.top('month',limit=None):
 	if submission.id not in submissionIDs:
 		submissionIDs.append(submission.id)
 		hitlerFound = False
@@ -105,7 +105,9 @@ for submission in subreddit.top('day',limit=None):
 					y = re.split("(\.|\?|\!|\n)",body)
 					x = [sentence for sentence in y if 'hitler' in sentence.lower()]
 					target = x[0].replace("\n","") 	#Target becomes the sentence in the comment containing the word Hitler
-					target = target.replace('"','') 
+					target = target.replace('"','')
+					target = target.replace('[','\[')
+					target = target.replace(']','\]') 
 					target = target.replace('>','') 
 					target = target.replace('  ',' ') #Remove extra spaces between words.
 					while target[:1] == " " :
