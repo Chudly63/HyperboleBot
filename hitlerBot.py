@@ -8,6 +8,9 @@
 #		It reads all the comments on posts in r/Politics that were posted that day
 #		Any comments that mention Hitler are saved
 #		The bot posts all the links it finds each day to r/TheHitlerFallacy
+#			The bot writes to three .csv files. One tracks how many Hitlers were said each day,
+#			one tracks whenever there is a new record number of hitlers, and the last tracks
+#			who said Hitler and how many times they said it.
 #
 import praw
 import pdb
@@ -55,6 +58,7 @@ else:
 	reds = [l for l in r]
 
 
+#The title of posts in r/Politics and the links/quotes to comments that mention Hitler
 postBody = ""
 
 #Construct the post title
@@ -68,8 +72,8 @@ subreddit = reddit.subreddit('Politics')
 postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
 #Subreddits for testing :: MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
-subreddit = reddit.subreddit('Justletmetest')
-postSubreddit = reddit.subreddit('Justletmetest')
+#subreddit = reddit.subreddit('Justletmetest')
+#postSubreddit = reddit.subreddit('Justletmetest')
 
 submissionsRead = 0		#Submissions read this session (not saved)
 sessionCommentCount = 0		#Comments read this session
@@ -81,13 +85,14 @@ print "Beginning Session for: "+ str(now.month) + "/" + str(now.day) + "/" + str
 
 maxSizeReached = False		#Reddit posts can only be 40000 characters. Almost every post will be under this limit, but if this is left unchecked, there is a chance the bot will be unable to post
 
+
 submissionIDs = []
 #Read all the posts from the last 24 hours
-for submission in subreddit.top('month',limit=None):
+for submission in subreddit.top('day',limit=None):
 	if submission.id not in submissionIDs:
 		submissionIDs.append(submission.id)
-		hitlerFound = False
-		quotes = []
+		hitlerFound = False	#Did we find a comment with "Hitler"?
+		quotes = []		#Quotes of comments that have "Hitler"
 		submissionsRead += 1
 		print "---Sumbission "+str(submissionsRead)	#Useful for debugging
 	
@@ -104,39 +109,41 @@ for submission in subreddit.top('month',limit=None):
 					#Find the sentence with "Hitler" in it, quote it, format it to a reddit hyperlink, and add the author
 					y = re.split("(\.|\?|\!|\n)",body)
 					x = [sentence for sentence in y if 'hitler' in sentence.lower()]
-					target = x[0].replace("\n","") 	#Target becomes the sentence in the comment containing the word Hitler
-					target = target.replace('"','')
-					target = target.replace('[','\[')
-					target = target.replace(']','\]') 
-					target = target.replace('>','') 
-					target = target.replace('  ',' ') #Remove extra spaces between words.
-					while target[:1] == " " :
-						target = target[1:]	#Remove the first character of the quote if it is blank
-					target = target[:1].upper() + target[1:]
-					isLink = (target[:4] == "Com/" or target[:4] == "Org/" or target[:4] == "Net/" or target[:4] == "Gov/")
+					target = x[0].replace("\n","") 		#Target becomes the sentence in the comment containing the word Hitler
+					target = target.replace('"','')		#Remove double quotes
+					target = target.replace('[','\[')	#Escape square brackets for Reddit's formatting
+					target = target.replace(']','\]') 	
+					target = target.replace('>','') 	#Remove '>' : This symbol is used on Reddit to symbolize quotes, so it appears often.
+					target = target.replace('  ',' ') 	#Remove extra spaces between words.
+					while target[:1] == " " :		
+						target = target[1:]		#Remove the first character of the quote if it is blank
+					target = target[:1].upper() + target[1:]#Capitalize the first letter
+					isLink = (target[:4] == "Com/" or target[:4] == "Org/" or target[:4] == "Net/" or target[:4] == "Gov/") #Makes sure the quote is not a hidden link
 					if target not in quotes and not isLink:	#Checks to see if someone is quoting a different comment in the same thread. Quoting a Hiler does not qualify as another Hitler	
 						if not hitlerFound and not maxSizeReached: 
-							postBody += '\n#####' + submission.title + '\n\n'
+							postBody += '\n#####' + submission.title + '\n\n'	#If it's the first "Hitler" add the title of the post it came from
 							hitlerFound = True
 						#Construct the quote, increment the hitler counter, save the comment ID, update Redditors.csv
 						l = "https://www.reddit.com" + comment.permalink
-						print l
+						print l		#For debugging
 						sessionHitlerCount += 1
 						hitlerIDs.append(comment.id)
+						
+						#Update the Redditors csv
 						author = comment.author
-						noted = False
+						noted = False	#Becomes true if the author is already in the csv
 						for i in range(len(reds)):
 							if reds[i][0] == author:
 								n = int(reds[i][1]) + 1
 								reds[i][1] = str(n)
 								noted = True
-						if not noted:
+						if not noted:	#True if this is the first time this author was 'caught' saying "Hitler"
 							reds.append([author,"1"])
 		
 						#A reddit link is formatted as such: [*Quote*](*Link*) - Author. This will display the quote as a link to *Link*
 						if not maxSizeReached:
 							postBody += '\n["' + target + '."](' + l + ') - ' + str(comment.author) + '\n'
-						if len(postBody) >= 38000:
+						if len(postBody) >= 38000:	#Maximum post size is 40,000 characters. Stopping at 38,000 leaves room for heading and stats
 							maxSizeReached = True
 						quotes.append(target)
 	
