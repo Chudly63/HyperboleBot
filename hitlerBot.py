@@ -121,7 +121,7 @@ for submission in subreddit.top('day',limit=None):
 					isLink = (target[:4] == "Com/" or target[:4] == "Org/" or target[:4] == "Net/" or target[:4] == "Gov/") #Makes sure the quote is not a hidden link
 					if target not in quotes and not isLink:	#Checks to see if someone is quoting a different comment in the same thread. Quoting a Hiler does not qualify as another Hitler	
 						if not hitlerFound and not maxSizeReached: 
-							postBody += '\n#####' + submission.title + '\n\n'	#If it's the first "Hitler" add the title of the post it came from
+							postBody += '\n#####' + submission.title + '\n'
 							hitlerFound = True
 						#Construct the quote, increment the hitler counter, save the comment ID, update Redditors.csv
 						l = "https://www.reddit.com" + comment.permalink
@@ -140,9 +140,9 @@ for submission in subreddit.top('day',limit=None):
 						if not noted:	#True if this is the first time this author was 'caught' saying "Hitler"
 							reds.append([author,"1"])
 		
-						#A reddit link is formatted as such: [*Quote*](*Link*) - Author. This will display the quote as a link to *Link*
+						#A reddit link is formatted as such: [*Quote*](*Link*) | Author. This will display the quote as a link to *Link*
 						if not maxSizeReached:
-							postBody += '\n["' + target + '."](' + l + ') - ' + str(comment.author) + '\n'
+							postBody += '\n- ["' + target + '."](' + l + ') - ' + str(comment.author) + '\n'
 						if len(postBody) >= 38000:	#Maximum post size is 40,000 characters. Stopping at 38,000 leaves room for heading and stats
 							maxSizeReached = True
 						quotes.append(target)
