@@ -17,7 +17,9 @@ import pdb
 import re
 import os
 import datetime
+import time
 import csv
+from praw.exceptions import APIException
 
 #Create a reddit instance using the config settings stored in praw.ini
 reddit = praw.Reddit('bot2')
@@ -91,7 +93,7 @@ submissionIDs = []
 for submission in subreddit.top('day',limit=None):
 	if submission.id not in submissionIDs:
 		submissionIDs.append(submission.id)
-		hitlerFound = False	#Did we find a comment with "Hitler"?
+		submissionHitlerCount = 0	#Did we find a comment with "Hitler"?
 		quotes = []		#Quotes of comments that have "Hitler"
 		submissionsRead += 1
 		print "---Sumbission "+str(submissionsRead)	#Useful for debugging
@@ -103,7 +105,7 @@ for submission in subreddit.top('day',limit=None):
 		sessionCommentCount += len(submission.comments.list())
 		for comment in submission.comments.list():
 			if re.search("hitler", comment.body, re.IGNORECASE):
-				if comment.id not in hitlerIDs:
+				if comment.id not in hitlerIDs and not str(comment.author) == "HitlerFallacyBot":
 					body = comment.body
 				
 					#Find the sentence with "Hitler" in it, quote it, format it to a reddit hyperlink, and add the author
@@ -120,13 +122,13 @@ for submission in subreddit.top('day',limit=None):
 					target = target[:1].upper() + target[1:]#Capitalize the first letter
 					isLink = (target[:4] == "Com/" or target[:4] == "Org/" or target[:4] == "Net/" or target[:4] == "Gov/") #Makes sure the quote is not a hidden link
 					if target not in quotes and not isLink:	#Checks to see if someone is quoting a different comment in the same thread. Quoting a Hiler does not qualify as another Hitler	
-						if not hitlerFound and not maxSizeReached: 
+						if submissionHitlerCount == 0 and not maxSizeReached: 
 							postBody += '\n#####' + submission.title + '\n'
-							hitlerFound = True
 						#Construct the quote, increment the hitler counter, save the comment ID, update Redditors.csv
 						l = "https://www.reddit.com" + comment.permalink
 						print l		#For debugging
 						sessionHitlerCount += 1
+						submissionHitlerCount += 1
 						hitlerIDs.append(comment.id)
 						
 						#Update the Redditors csv
@@ -146,7 +148,18 @@ for submission in subreddit.top('day',limit=None):
 						if len(postBody) >= 38000:	#Maximum post size is 40,000 characters. Stopping at 38,000 leaves room for heading and stats
 							maxSizeReached = True
 						quotes.append(target)
-	
+		posted = False
+		while not posted:
+			try:
+				if submissionHitlerCount > 2:
+					reply = "I found " + str(submissionHitlerCount) + " Hitlers in this post. They will be linked in r/TheHitlerFallacy\n\n"
+					reply += "***\n\n^(Beep Boop ~ I am a robot. My purpose is to find and link comments in r/Politics that mention Hitler.)"
+					reply += "\n\n^(This message was posted because there were multiple mentions to Hitler in this comment section.)"
+					submission.reply(reply)
+				posted = True
+			except APIException as err:
+				print err
+				time.sleep(300)
 	
 #Calculate new totals
 hitlerCount += sessionHitlerCount
@@ -206,11 +219,17 @@ postText += "\n\n***\n\nSieg Heil! I mean... Beep Boop, I am a robot.\n\nMy purp
 postText += "that contain the word 'Hitler'\n\nSince my birth, I have found a total of " + str(hitlerCount) + " Hitlers in r/Politics. "
 postText += "On average, I found " + str(averageHitlers) + " Hitlers per day.\n\n"
 postText += "Today, I read " + str(sessionCommentCount) + " comments. In total, I have read " + str(commentCount) + " comments."
-postText += "\n\n\n\n#I am in my second phase of testing. I am not perfect. I am sorry. I love you."
 
 
 #Submit the post to r/TheHitlerFallacy
-postSubreddit.submit(titleText, selftext = postText)
+posted = False
+while posted == False:
+	try:
+		postSubreddit.submit(titleText, selftext = postText)
+		posted = True
+	except APIException as err:
+		print err
+		time.sleep(60)
 
 #For testing
 #print postText
