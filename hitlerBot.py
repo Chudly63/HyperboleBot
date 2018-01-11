@@ -70,12 +70,12 @@ titleText = "Hitler Hunt for " + date
 
 
 #Subreddits for running ::  MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
-subreddit = reddit.subreddit('Politics')
-postSubreddit = reddit.subreddit('TheHitlerFallacy')
+#subreddit = reddit.subreddit('Politics')
+#postSubreddit = reddit.subreddit('TheHitlerFallacy')
 
 #Subreddits for testing :: MAKE SURE YOU UPDATE SUBMISSION LOOP WHEN CHANGING
-#subreddit = reddit.subreddit('Justletmetest')
-#postSubreddit = reddit.subreddit('Justletmetest')
+subreddit = reddit.subreddit('Justletmetest')
+postSubreddit = reddit.subreddit('Justletmetest')
 
 submissionsRead = 0		#Submissions read this session (not saved)
 sessionCommentCount = 0		#Comments read this session
@@ -88,9 +88,10 @@ print "Beginning Session for: "+ str(now.month) + "/" + str(now.day) + "/" + str
 maxSizeReached = False		#Reddit posts can only be 40000 characters. Almost every post will be under this limit, but if this is left unchecked, there is a chance the bot will be unable to post
 
 
+links = [] #A queue of comment IDs. The responder bot responds to the next comment in the queue.
 submissionIDs = []
 #Read all the posts from the last 24 hours
-for submission in subreddit.top('day',limit=None):
+for submission in subreddit.top('month',limit=None):
 	if submission.id not in submissionIDs:
 		submissionIDs.append(submission.id)
 		submissionHitlerCount = 0	#Did we find a comment with "Hitler"?
@@ -127,6 +128,7 @@ for submission in subreddit.top('day',limit=None):
 						#Construct the quote, increment the hitler counter, save the comment ID, update Redditors.csv
 						l = "https://www.reddit.com" + comment.permalink
 						print l		#For debugging
+						links.append(comment.id)
 						sessionHitlerCount += 1
 						submissionHitlerCount += 1
 						hitlerIDs.append(comment.id)
@@ -151,8 +153,8 @@ for submission in subreddit.top('day',limit=None):
 		posted = False
 		while not posted:
 			try:
-				if submissionHitlerCount > 2:
-					reply = "I found " + str(submissionHitlerCount) + " Hitlers in this post. They will be linked in r/TheHitlerFallacy\n\n"
+				if submissionHitlerCount > 1:
+					reply = "I found " + str(submissionHitlerCount) + " comments with 'Hitler' in this post. They will be linked in r/TheHitlerFallacy\n\n"
 					reply += "***\n\n^(Beep Boop ~ I am a robot. My purpose is to find and link comments in r/Politics that mention Hitler.)"
 					reply += "\n\n^(This message was posted because there were multiple mentions to Hitler in this comment section.)"
 					submission.reply(reply)
@@ -198,6 +200,9 @@ if sessionHitlerCount == 0:
 	postBody = "I have no links to share. I am sorry, friends.\n"
 postText += postBody
 
+with open("links.txt","a") as f:
+	for l in links:
+		f.write(l+"\n")
 
 #Save the running total
 with open("stats.txt","w") as f:
